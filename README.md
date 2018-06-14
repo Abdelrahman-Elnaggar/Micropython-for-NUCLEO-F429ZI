@@ -25,11 +25,11 @@ This is a guide showing how to port Micropython on the Nucleo-F429ZI and run you
  
  Download a copy of the micropython repository to your computer using the following command:
  
-      $ git clone https://github.com/Abdelrahman-Elnaggar/Micropython-on-STM-Nucleo-F429ZI.git
+      $ git clone https://github.com/ziadelmolla/Micropython-for-NUCLEO-F429ZI.git
       
- Go to micropython/ports/stm32 using the following command:
+ Go to Micropython-for-NUCLEO-F429ZI/ports/stm32 using the following command:
  
-      $ cd micropython/ports/stm32
+      $ cd Micropython-for-NUCLEO-F429ZI/ports/stm32
       
  The stm32 directory contains the makefile for the NUCLEO_F429ZI board.You can build the firmware for this board using the following     command:
  
