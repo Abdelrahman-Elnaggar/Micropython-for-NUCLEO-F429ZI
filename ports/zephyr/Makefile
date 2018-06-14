@@ -41,7 +41,6 @@ SRC_C = main.c \
 	modusocket.c \
 	modutime.c \
 	modzephyr.c \
-	modzsensor.c \
 	modmachine.c \
 	machine_pin.c \
 	uart_core.c \
@@ -106,4 +105,4 @@ outdir/$(BOARD)/Makefile: $(CONF_FILE)
 
 $(Z_EXPORTS): outdir/$(BOARD)/Makefile
 	make --no-print-directory -C outdir/$(BOARD) outputexports CMAKE_COMMAND=: >$@
-	make -C outdir/$(BOARD) syscall_macros_h_target syscall_list_h_target kobj_types_h_target
+	make -C outdir/$(BOARD) syscall_macros_h_target syscall_list_h_target

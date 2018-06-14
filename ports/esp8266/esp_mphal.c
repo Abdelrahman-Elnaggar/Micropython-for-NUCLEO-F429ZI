@@ -35,18 +35,15 @@
 #include "extmod/misc.h"
 #include "lib/utils/pyexec.h"
 
-STATIC byte stdin_ringbuf_array[256];
-ringbuf_t stdin_ringbuf = {stdin_ringbuf_array, sizeof(stdin_ringbuf_array), 0, 0};
+STATIC byte input_buf_array[256];
+ringbuf_t input_buf = {input_buf_array, sizeof(input_buf_array)};
 void mp_hal_debug_tx_strn_cooked(void *env, const char *str, uint32_t len);
 const mp_print_t mp_debug_print = {NULL, mp_hal_debug_tx_strn_cooked};
-
-int uart_attached_to_dupterm;
 
 void mp_hal_init(void) {
     //ets_wdt_disable(); // it's a pain while developing
     mp_hal_rtc_init();
     uart_init(UART_BIT_RATE_115200, UART_BIT_RATE_115200);
-    uart_attached_to_dupterm = 0;
 }
 
 void mp_hal_delay_us(uint32_t us) {
@@ -58,7 +55,7 @@ void mp_hal_delay_us(uint32_t us) {
 
 int mp_hal_stdin_rx_chr(void) {
     for (;;) {
-        int c = ringbuf_get(&stdin_ringbuf);
+        int c = ringbuf_get(&input_buf);
         if (c != -1) {
             return c;
         }
@@ -83,11 +80,19 @@ void mp_hal_debug_str(const char *str) {
 #endif
 
 void mp_hal_stdout_tx_str(const char *str) {
-    mp_uos_dupterm_tx_strn(str, strlen(str));
+    const char *last = str;
+    while (*str) {
+        uart_tx_one_char(UART0, *str++);
+    }
+    mp_uos_dupterm_tx_strn(last, str - last);
 }
 
 void mp_hal_stdout_tx_strn(const char *str, uint32_t len) {
-    mp_uos_dupterm_tx_strn(str, len);
+    const char *last = str;
+    while (len--) {
+        uart_tx_one_char(UART0, *str++);
+    }
+    mp_uos_dupterm_tx_strn(last, str - last);
 }
 
 void mp_hal_stdout_tx_strn_cooked(const char *str, uint32_t len) {
@@ -97,11 +102,13 @@ void mp_hal_stdout_tx_strn_cooked(const char *str, uint32_t len) {
             if (str > last) {
                 mp_uos_dupterm_tx_strn(last, str - last);
             }
+            uart_tx_one_char(UART0, '\r');
+            uart_tx_one_char(UART0, '\n');
             mp_uos_dupterm_tx_strn("\r\n", 2);
             ++str;
             last = str;
         } else {
-            ++str;
+            uart_tx_one_char(UART0, *str++);
         }
     }
     if (str > last) {
@@ -159,7 +166,7 @@ STATIC void dupterm_task_handler(os_event_t *evt) {
         if (c < 0) {
             break;
         }
-        ringbuf_put(&stdin_ringbuf, c);
+        ringbuf_put(&input_buf, c);
     }
     mp_hal_signal_input();
     lock = 0;
